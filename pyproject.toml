@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "algoritmika"
+version = "0.1.0"
+description = ""
+authors = ["Egor Boev <egorcoders@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pillow = "^9.5.0"
+pyqt5 = "^5.15.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
