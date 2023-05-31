@@ -64,6 +64,10 @@ for j in range(3):  # цикл по столбцам
         x = x + 55  # увеличиваем координату следующего монстра
     count = count - 1  # для следующего ряда уменьшаем кол-во монстров
 
+    
+move_right = None
+move_left = None
+
 while not game_over:
     ball.fill()
     platform.fill()
@@ -71,7 +75,27 @@ while not game_over:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game_over = True
+            
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                move_right = True
+            
+            if event.key == pygame.K_LEFT:
+                move_left = True
 
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT:
+                move_right = False
+
+            if event.key == pygame.K_LEFT:
+                move_left = False
+
+    if move_right is True:
+        platform.rect.x += 3
+
+    
+    if move_left is True:
+        platform.rect.x -= 3
     # отрисовываем всех монстров из списка
     for m in monsters:
         m.draw()
