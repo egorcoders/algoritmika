@@ -1,108 +1,86 @@
-import pygame
-
-pygame.init()
-
-back = (200, 255, 255)  # цвет фона (background)
-mw = pygame.display.set_mode((500, 500))  # окно программы (main window)
-mw.fill(back)
-clock = pygame.time.Clock()
-
-# переменные, отвечающие за координаты платформы
-racket_x = 200
-racket_y = 330
-
-# флаг окончания игры
-game_over = False
+from pygame import *
 
 
-# класс из предыдущего проекта
-class Area():
-    def __init__(self, x=0, y=0, width=10, height=10, color=None):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.fill_color = back
-        if color:
-            self.fill_color = color
-
-    def color(self, new_color):
-        self.fill_color = new_color
-
-    def fill(self):
-        pygame.draw.rect(mw, self.fill_color, self.rect)
-
-    def collidepoint(self, x, y):
-        return self.rect.collidepoint(x, y)
-
-    def colliderect(self, rect):
-        return self.rect.colliderect(rect)
+# фоновая музыка
+mixer.init()
+mixer.music.load("space.ogg")
+mixer.music.play()
+fire_sound = mixer.Sound("fire.ogg")
 
 
-# класс для объектов-картинок
-class Picture(Area):
-    def __init__(self, filename, x=0, y=0, width=10, height=10):
-        Area.__init__(self, x=x, y=y, width=width, height=height, color=None)
-        self.image = pygame.image.load(filename)
-
-    def draw(self):
-        mw.blit(self.image, (self.rect.x, self.rect.y))
+# нам нужны такие картинки:
+img_back = "galaxy.jpg"  # фон игры
+img_hero = "rocket.png"  # герой
 
 
-# создание мяча и платформы   
-ball = Picture('ball.png', 160, 200, 50, 50)
-platform = Picture('platform.png', racket_x, racket_y, 100, 30)
+# класс-родитель для других спрайтов
+class GameSprite(sprite.Sprite):
+    # конструктор класса
+    def __init__(self, player_image, player_x, player_y, size_x, size_y, player_speed):
+        # Вызываем конструктор класса (Sprite):
+        sprite.Sprite.__init__(self)
 
-# создание врагов
-start_x = 5  # координаты создания первого монстра
-start_y = 5
-count = 9  # количество монстров в верхнем ряду
-monsters = []  # список для хранения объектов-монстров
-for j in range(3):  # цикл по столбцам
-    y = start_y + (55 * j)  # координата монстра в каждом след. столбце будет смещена на 55 пикселей по y
-    x = start_x + (27.5 * j)  # и 27.5 по x
-    for i in range(count):  # цикл по рядам (строкам) создаёт в строке количество монстров, равное count
-        d = Picture('enemy.png', x, y, 50, 50)  # создаём монстра
-        monsters.append(d)  # добавляем в список
-        x = x + 55  # увеличиваем координату следующего монстра
-    count = count - 1  # для следующего ряда уменьшаем кол-во монстров
+        # каждый спрайт должен хранить свойство image - изображение
+        self.image = transform.scale(image.load(player_image), (size_x, size_y))
+        self.speed = player_speed
 
-    
-move_right = None
-move_left = None
+        # каждый спрайт должен хранить свойство rect - прямоугольник, в который он вписан
+        self.rect = self.image.get_rect()
+        self.rect.x = player_x
+        self.rect.y = player_y
 
-while not game_over:
-    ball.fill()
-    platform.fill()
+    # метод, отрисовывающий героя на окне
+    def reset(self):
+        window.blit(self.image, (self.rect.x, self.rect.y))
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            game_over = True
-            
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                move_right = True
-            
-            if event.key == pygame.K_LEFT:
-                move_left = True
 
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_RIGHT:
-                move_right = False
+# класс главного игрока
+class Player(GameSprite):
+    # метод для управления спрайтом стрелками клавиатуры
+    def update(self):
+        keys = key.get_pressed()
+        if keys[K_LEFT] and self.rect.x > 5:
+            self.rect.x -= self.speed
+        if keys[K_RIGHT] and self.rect.x < win_width - 80:
+            self.rect.x += self.speed
 
-            if event.key == pygame.K_LEFT:
-                move_left = False
+    # метод "выстрел" (используем место игрока, чтобы создать там пулю)
+    def fire(self):
+        pass
 
-    if move_right is True:
-        platform.rect.x += 3
 
-    
-    if move_left is True:
-        platform.rect.x -= 3
-    # отрисовываем всех монстров из списка
-    for m in monsters:
-        m.draw()
+# Создаем окошко
+win_width = 700
+win_height = 500
+display.set_caption("Shooter")
+window = display.set_mode((win_width, win_height))
+background = transform.scale(image.load(img_back), (win_width, win_height))
 
-    platform.draw()
-    ball.draw()
 
-    pygame.display.update()
+# создаем спрайты
+ship = Player(img_hero, 5, win_height - 100, 80, 100, 10)
 
-    clock.tick(40)
+
+# переменная "игра закончилась": как только там True, в основном цикле перестают работать спрайты
+finish = False
+# Основной цикл игры:
+run = True  # флаг сбрасывается кнопкой закрытия окна
+while run:
+    # событие нажатия на кнопку Закрыть
+    for e in event.get():
+        if e.type == QUIT:
+            run = False
+
+    if not finish:
+        # обновляем фон
+        window.blit(background, (0, 0))
+
+        # производим движения спрайтов
+        ship.update()
+
+        # обновляем их в новом местоположении при каждой итерации цикла
+        ship.reset()
+
+        display.update()
+    # цикл срабатывает каждые 0.05 секунд
+    time.delay(50)
