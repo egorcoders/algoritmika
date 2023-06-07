@@ -1,86 +1,98 @@
-from pygame import *
-
-
-# фоновая музыка
-mixer.init()
-mixer.music.load("space.ogg")
-mixer.music.play()
-fire_sound = mixer.Sound("fire.ogg")
-
-
-# нам нужны такие картинки:
-img_back = "galaxy.jpg"  # фон игры
-img_hero = "rocket.png"  # герой
-
-
-# класс-родитель для других спрайтов
-class GameSprite(sprite.Sprite):
-    # конструктор класса
-    def __init__(self, player_image, player_x, player_y, size_x, size_y, player_speed):
-        # Вызываем конструктор класса (Sprite):
-        sprite.Sprite.__init__(self)
-
-        # каждый спрайт должен хранить свойство image - изображение
-        self.image = transform.scale(image.load(player_image), (size_x, size_y))
-        self.speed = player_speed
-
-        # каждый спрайт должен хранить свойство rect - прямоугольник, в который он вписан
-        self.rect = self.image.get_rect()
-        self.rect.x = player_x
-        self.rect.y = player_y
-
-    # метод, отрисовывающий героя на окне
-    def reset(self):
-        window.blit(self.image, (self.rect.x, self.rect.y))
-
-
-# класс главного игрока
-class Player(GameSprite):
-    # метод для управления спрайтом стрелками клавиатуры
-    def update(self):
-        keys = key.get_pressed()
-        if keys[K_LEFT] and self.rect.x > 5:
-            self.rect.x -= self.speed
-        if keys[K_RIGHT] and self.rect.x < win_width - 80:
-            self.rect.x += self.speed
-
-    # метод "выстрел" (используем место игрока, чтобы создать там пулю)
-    def fire(self):
-        pass
-
-
-# Создаем окошко
-win_width = 700
-win_height = 500
-display.set_caption("Shooter")
-window = display.set_mode((win_width, win_height))
-background = transform.scale(image.load(img_back), (win_width, win_height))
-
-
-# создаем спрайты
-ship = Player(img_hero, 5, win_height - 100, 80, 100, 10)
-
-
-# переменная "игра закончилась": как только там True, в основном цикле перестают работать спрайты
-finish = False
-# Основной цикл игры:
-run = True  # флаг сбрасывается кнопкой закрытия окна
-while run:
-    # событие нажатия на кнопку Закрыть
-    for e in event.get():
-        if e.type == QUIT:
-            run = False
-
-    if not finish:
-        # обновляем фон
-        window.blit(background, (0, 0))
-
-        # производим движения спрайтов
-        ship.update()
-
-        # обновляем их в новом местоположении при каждой итерации цикла
-        ship.reset()
-
-        display.update()
-    # цикл срабатывает каждые 0.05 секунд
-    time.delay(50)
+import pygame
+pygame.init()
+back = (200, 255, 255)
+mw = pygame.display.set_mode((500, 500))
+mw.fill(back)
+clock = pygame.time.Clock()
+#переменные, отвечающие за координаты платформы
+platform_x = 200
+platform_y = 330
+#переменные, отвечающие за направления перемещения мяча
+dx = 3
+dy = 3
+#фраги, отвечающие за движение платформы вправо/влево
+move_right = False
+move_left = False
+#флаг окончания игры
+game_over = False
+#класс с предыдущего проекта
+class Area():
+  def __init__(self, x=0, y=0, width=10, height=10, color=None):
+      """ область: прямоугольник в нужном месте и нужного цвета """
+      #запоминаем прямоугольник:
+      self.rect = pygame.Rect(x, y, width, height)
+      #цвет заливки - или переданный параметр, или общий цвет фона
+      self.fill_color = back
+      if color:
+          self.fill_color = color
+  def color(self, new_color):
+      self.fill_color = new_color
+  def fill(self):
+      pygame.draw.rect(mw, self.fill_color, self.rect)
+  def collidepoint(self, x, y):
+      return self.rect.collidepoint(x, y)      
+  def colliderect(self, rect):
+      return self.rect.colliderect(rect)
+#класс для объектов-картинок
+class Picture(Area):
+  def __init__(self, filename, x=0, y=0, width=10, height=10):
+      Area.__init__(self, x=x, y=y, width=width, height=height, color=None)
+      self.image = pygame.image.load(filename)
+    
+  def draw(self):
+      mw.blit(self.image, (self.rect.x, self.rect.y))
+#создание мяча и платформы 
+ball = Picture('ball.png', 160, 200, 50, 50)
+platform = Picture('platform.png', platform_x, platform_y, 100, 30)
+#создание врагов
+start_x = 5
+start_y = 5
+count = 9
+monsters = []
+for j in range(3):
+  y = start_y + (55 * j)
+  x = start_x + (27.5 * j)
+  for i in range (count):
+      d = Picture('enemy.png', x, y, 50, 50)
+      monsters.append(d)
+      x = x + 55
+  count = count - 1
+while not game_over:
+  ball.fill()
+  platform.fill()
+    
+  for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+          game_over = True
+      if event.type == pygame.KEYDOWN:
+          if event.key == pygame.K_RIGHT: #если нажата клавиша
+              move_right = True #поднимаем флаг
+          if event.key == pygame.K_LEFT:
+              move_left = True #поднимаем флаг
+      elif event.type == pygame.KEYUP:
+          if event.key == pygame.K_RIGHT:
+              move_right = False #опускаем флаг
+          if event.key == pygame.K_LEFT:
+              move_left = False #опускаем флаг
+    
+  if move_right: #флаг движения вправо
+      platform.rect.x +=3
+  if move_left: #флаг движения влево
+      platform.rect.x -=3
+  #придаём постоянное ускорение мячу по x и y
+  ball.rect.x += dx
+  ball.rect.y += dy
+   #если мяч достигает границ экрана, меняем направление его движения
+  if  ball.rect.y < 0:
+      dy *= -1
+  if ball.rect.x > 450 or ball.rect.x < 0:
+      dx *= -1
+  #если мяч коснулся ракетки, меняем направление движения
+  if ball.rect.colliderect(platform.rect):
+      dy *= -1
+  for m in monsters:
+      m.draw()
+  platform.draw()
+  ball.draw()
+  pygame.display.update()
+  clock.tick(40)
