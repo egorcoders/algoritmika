@@ -110,6 +110,12 @@ while not game_over:
         dy *= -1
     for m in monsters:
         m.draw()
+        #если монстра коснулся мяч, удаляем монстра из списка и меняем направления движения мяча
+        if m.rect.colliderect(ball.rect):
+            monsters.remove(m)
+            m.fill()
+            dy *= -1
+
     platform.draw()
     ball.draw()
     pygame.display.update()
