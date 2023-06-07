@@ -51,7 +51,14 @@ class Picture(Area):
     def draw(self):
         mw.blit(self.image, (self.rect.x, self.rect.y))
 
-
+class Label(Area):
+    def set_text(self, text, fsize=12, text_color=(0, 0, 0)):
+        self.image = pygame.font.SysFont('verdana', fsize).render(text, True, text_color)
+        
+    def draw(self, shift_x=0, shift_y=0):
+        self.fill()
+        mw.blit(self.image, (self.rect.x + shift_x, self.rect.y + shift_y))
+    
 # создание мяча и платформы
 ball = Picture('ball.png', 160, 200, 50, 50)
 platform = Picture('platform.png', platform_x, platform_y, 100, 30)
